@@ -1,0 +1,42 @@
+[
+  {
+    "policy": "HAL-NR-P0001",
+    "runbook_url": "https://runbooks.example.com/hal-nr-p0001"
+  },
+  {
+    "policy": "HAL-NR-P0009",
+    "runbook_url": "https://runbooks.example.com/hal-nr-p0009"
+  },
+  {
+    "policy": "HAL-NR-P0007",
+    "runbook_url": "https://runbooks.example.com/hal-nr-p0007"
+  },
+  {
+    "policy": "HAL-NR-P0008",
+    "runbook_url": "https://runbooks.example.com/hal-nr-p0008"
+  },
+  {
+    "policy": "HAL-NR-P0010",
+    "runbook_url": "https://runbooks.example.com/hal-nr-p0010"
+  },
+  {
+    "policy": "HAL-NR-P0004",
+    "runbook_url": "https://runbooks.example.com/hal-nr-p0004"
+  },
+  {
+    "policy": "HAL-NR-P0002",
+    "runbook_url": "https://runbooks.example.com/hal-nr-p0002"
+  },
+  {
+    "policy": "HAL-NR-P0013",
+    "runbook_url": "https://runbooks.example.com/hal-nr-p0013"
+  },
+  {
+    "policy": "HAL-NR-P0006",
+    "runbook_url": "https://runbooks.example.com/hal-nr-p0006"
+  },
+  {
+    "policy": "HAL-NR-P0012",
+    "runbook_url": "https://runbooks.example.com/hal-nr-p0012"
+  }
+]
