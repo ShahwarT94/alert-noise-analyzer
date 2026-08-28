@@ -7,13 +7,13 @@ Detects policies that have alerts but no corresponding runbook documentation.
 import argparse
 import json
 from collections import defaultdict
-from typing import Any
 
 
 def load_json(filepath: str) -> list[dict]:
     """Load JSON data from a file."""
-    with open(filepath, "r") as f:
-        return json.load(f)
+    with open(filepath) as f:
+        data: list[dict] = json.load(f)
+    return data
 
 
 def detect_runbook_gaps(
@@ -44,13 +44,15 @@ def detect_runbook_gaps(
         if policy:
             runbook_policies.add(policy)
 
-    findings = []
+    findings: list[dict] = []
     for policy, count in policy_counts.items():
         if policy not in runbook_policies:
-            findings.append({
-                "policy": policy,
-                "alert_count": count,
-            })
+            findings.append(
+                {
+                    "policy": policy,
+                    "alert_count": count,
+                }
+            )
 
     findings.sort(key=lambda f: f["alert_count"], reverse=True)
     return findings
@@ -72,10 +74,20 @@ def print_findings(findings: list[dict]) -> None:
     print(f"\nTotal policies missing runbooks: {len(findings)}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Detect runbook coverage gaps")
-    parser.add_argument("--alerts", type=str, default="data/alerts.json", help="Path to alerts JSON file")
-    parser.add_argument("--runbooks", type=str, default="data/runbooks.json", help="Path to runbooks JSON file")
+    parser.add_argument(
+        "--alerts",
+        type=str,
+        default="data/alerts.json",
+        help="Path to alerts JSON file",
+    )
+    parser.add_argument(
+        "--runbooks",
+        type=str,
+        default="data/runbooks.json",
+        help="Path to runbooks JSON file",
+    )
     args = parser.parse_args()
 
     alerts = load_json(args.alerts)

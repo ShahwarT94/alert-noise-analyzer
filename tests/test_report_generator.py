@@ -4,6 +4,7 @@ Tests for the report generator.
 """
 
 import pytest
+
 from report.report_generator import generate_report
 
 
@@ -31,37 +32,45 @@ def test_all_sections_empty():
 
 def test_all_sections_with_findings():
     """Test report with findings in all four categories - confirm each section's content appears."""
-    recurring = [{
-        "condition": "High CPU",
-        "account_id": "ACC-001",
-        "occurrence_count": 10,
-        "first_seen": "2026-08-01T12:00:00Z",
-        "last_seen": "2026-08-01T18:00:00Z",
-        "violation_ids": ["V-001", "V-002"],
-    }]
+    recurring = [
+        {
+            "condition": "High CPU",
+            "account_id": "ACC-001",
+            "occurrence_count": 10,
+            "first_seen": "2026-08-01T12:00:00Z",
+            "last_seen": "2026-08-01T18:00:00Z",
+            "violation_ids": ["V-001", "V-002"],
+        }
+    ]
 
-    correlation = [{
-        "account_id": "ACC-001",
-        "cluster_start": "2026-08-01T12:00:00Z",
-        "cluster_end": "2026-08-01T12:10:00Z",
-        "alert_count": 3,
-        "conditions_involved": ["High CPU", "High Memory", "Disk Full"],
-        "violation_ids": ["V-001", "V-002", "V-003"],
-    }]
+    correlation = [
+        {
+            "account_id": "ACC-001",
+            "cluster_start": "2026-08-01T12:00:00Z",
+            "cluster_end": "2026-08-01T12:10:00Z",
+            "alert_count": 3,
+            "conditions_involved": ["High CPU", "High Memory", "Disk Full"],
+            "violation_ids": ["V-001", "V-002", "V-003"],
+        }
+    ]
 
-    threshold = [{
-        "condition": "High CPU",
-        "configured_threshold": 80.0,
-        "median_observed": 30.0,
-        "sample_size": 10,
-        "deviation_pct": 62.5,
-        "direction": "over-sensitive",
-    }]
+    threshold = [
+        {
+            "condition": "High CPU",
+            "configured_threshold": 80.0,
+            "median_observed": 30.0,
+            "sample_size": 10,
+            "deviation_pct": 62.5,
+            "direction": "over-sensitive",
+        }
+    ]
 
-    runbook = [{
-        "policy": "POL-001",
-        "alert_count": 25,
-    }]
+    runbook = [
+        {
+            "policy": "POL-001",
+            "alert_count": 25,
+        }
+    ]
 
     report = generate_report(recurring, correlation, threshold, runbook)
 
@@ -98,14 +107,16 @@ def test_section_truncation_with_cap():
     # Create 20 recurring findings
     recurring = []
     for i in range(20):
-        recurring.append({
-            "condition": f"Condition {i}",
-            "account_id": f"ACC-{i:03d}",
-            "occurrence_count": 5 + i,
-            "first_seen": "2026-08-01T12:00:00Z",
-            "last_seen": "2026-08-01T18:00:00Z",
-            "violation_ids": [f"V-{i:03d}"],
-        })
+        recurring.append(
+            {
+                "condition": f"Condition {i}",
+                "account_id": f"ACC-{i:03d}",
+                "occurrence_count": 5 + i,
+                "first_seen": "2026-08-01T12:00:00Z",
+                "last_seen": "2026-08-01T18:00:00Z",
+                "violation_ids": [f"V-{i:03d}"],
+            }
+        )
 
     report = generate_report(recurring, [], [], [], display_cap=10)
 
@@ -119,9 +130,39 @@ def test_section_truncation_with_cap():
 
 def test_truncation_all_sections():
     """Test truncation works for all four section types."""
-    recurring = [{"condition": f"C{i}", "account_id": f"A{i}", "occurrence_count": 5, "first_seen": "2026-08-01T12:00:00Z", "last_seen": "2026-08-01T18:00:00Z", "violation_ids": [f"V{i}"]} for i in range(20)]
-    correlation = [{"account_id": f"A{i}", "cluster_start": "2026-08-01T12:00:00Z", "cluster_end": "2026-08-01T12:10:00Z", "alert_count": 3, "conditions_involved": ["C1", "C2"], "violation_ids": [f"V{i}"]} for i in range(20)]
-    threshold = [{"condition": f"C{i}", "configured_threshold": 80.0, "median_observed": 30.0, "sample_size": 10, "deviation_pct": 62.5, "direction": "over-sensitive"} for i in range(20)]
+    recurring = [
+        {
+            "condition": f"C{i}",
+            "account_id": f"A{i}",
+            "occurrence_count": 5,
+            "first_seen": "2026-08-01T12:00:00Z",
+            "last_seen": "2026-08-01T18:00:00Z",
+            "violation_ids": [f"V{i}"],
+        }
+        for i in range(20)
+    ]
+    correlation = [
+        {
+            "account_id": f"A{i}",
+            "cluster_start": "2026-08-01T12:00:00Z",
+            "cluster_end": "2026-08-01T12:10:00Z",
+            "alert_count": 3,
+            "conditions_involved": ["C1", "C2"],
+            "violation_ids": [f"V{i}"],
+        }
+        for i in range(20)
+    ]
+    threshold = [
+        {
+            "condition": f"C{i}",
+            "configured_threshold": 80.0,
+            "median_observed": 30.0,
+            "sample_size": 10,
+            "deviation_pct": 62.5,
+            "direction": "over-sensitive",
+        }
+        for i in range(20)
+    ]
     runbook = [{"policy": f"POL-{i}", "alert_count": 10} for i in range(20)]
 
     report = generate_report(recurring, correlation, threshold, runbook, display_cap=5)
@@ -137,14 +178,16 @@ def test_truncation_all_sections():
 
 def test_markdown_format():
     """Test that output is valid markdown with proper table formatting."""
-    recurring = [{
-        "condition": "High CPU",
-        "account_id": "ACC-001",
-        "occurrence_count": 10,
-        "first_seen": "2026-08-01T12:00:00Z",
-        "last_seen": "2026-08-01T18:00:00Z",
-        "violation_ids": ["V-001"],
-    }]
+    recurring = [
+        {
+            "condition": "High CPU",
+            "account_id": "ACC-001",
+            "occurrence_count": 10,
+            "first_seen": "2026-08-01T12:00:00Z",
+            "last_seen": "2026-08-01T18:00:00Z",
+            "violation_ids": ["V-001"],
+        }
+    ]
 
     report = generate_report(recurring, [], [], [])
 

@@ -8,13 +8,13 @@ import argparse
 import json
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Any
 
 
 def load_alerts(filepath: str) -> list[dict]:
     """Load alerts from a JSON file."""
-    with open(filepath, "r") as f:
-        return json.load(f)
+    with open(filepath) as f:
+        data: list[dict] = json.load(f)
+    return data
 
 
 def detect_recurring_patterns(
@@ -53,11 +53,13 @@ def detect_recurring_patterns(
         except (ValueError, AttributeError):
             continue
 
-        grouped[(condition, account_id)].append({
-            "violation_id": violation_id,
-            "opened_at": opened_at,
-            "opened_at_str": opened_at_str,
-        })
+        grouped[(condition, account_id)].append(
+            {
+                "violation_id": violation_id,
+                "opened_at": opened_at,
+                "opened_at_str": opened_at_str,
+            }
+        )
 
     findings = []
 
@@ -71,7 +73,7 @@ def detect_recurring_patterns(
         unique_records = list(unique_by_violation.values())
         unique_records.sort(key=lambda r: r["opened_at"])
 
-        for i, record in enumerate(unique_records):
+        for record in unique_records:
             window_start = record["opened_at"]
             window_end = window_start + window_delta
 
@@ -81,18 +83,22 @@ def detect_recurring_patterns(
                     window_violations.append(r)
 
             if len(window_violations) >= min_occurrences:
-                violation_ids = [r["violation_id"] for r in window_violations if r["violation_id"]]
+                violation_ids = [
+                    r["violation_id"] for r in window_violations if r["violation_id"]
+                ]
                 first_seen = min(r["opened_at_str"] for r in window_violations)
                 last_seen = max(r["opened_at_str"] for r in window_violations)
 
-                findings.append({
-                    "condition": condition,
-                    "account_id": account_id,
-                    "occurrence_count": len(window_violations),
-                    "first_seen": first_seen,
-                    "last_seen": last_seen,
-                    "violation_ids": violation_ids,
-                })
+                findings.append(
+                    {
+                        "condition": condition,
+                        "account_id": account_id,
+                        "occurrence_count": len(window_violations),
+                        "first_seen": first_seen,
+                        "last_seen": last_seen,
+                        "violation_ids": violation_ids,
+                    }
+                )
                 break
 
     findings.sort(key=lambda f: f["occurrence_count"], reverse=True)
@@ -105,7 +111,9 @@ def print_findings(findings: list[dict]) -> None:
         print("No recurring patterns found.")
         return
 
-    print(f"\n{'Condition':<40} {'Account':<10} {'Count':>6} {'First Seen':<20} {'Last Seen':<20}")
+    print(
+        f"\n{'Condition':<40} {'Account':<10} {'Count':>6} {'First Seen':<20} {'Last Seen':<20}"
+    )
     print("-" * 100)
     for f in findings:
         condition = f["condition"][:39]
@@ -118,11 +126,17 @@ def print_findings(findings: list[dict]) -> None:
     print(f"\nTotal findings: {len(findings)}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Detect recurring alert patterns")
-    parser.add_argument("--input", type=str, default="data/alerts.json", help="Path to alerts JSON file")
-    parser.add_argument("--window-days", type=int, default=7, help="Rolling window in days")
-    parser.add_argument("--min-occurrences", type=int, default=5, help="Minimum occurrences to flag")
+    parser.add_argument(
+        "--input", type=str, default="data/alerts.json", help="Path to alerts JSON file"
+    )
+    parser.add_argument(
+        "--window-days", type=int, default=7, help="Rolling window in days"
+    )
+    parser.add_argument(
+        "--min-occurrences", type=int, default=5, help="Minimum occurrences to flag"
+    )
     args = parser.parse_args()
 
     alerts = load_alerts(args.input)

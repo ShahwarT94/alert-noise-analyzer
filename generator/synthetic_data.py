@@ -7,16 +7,24 @@ Generates alerts.json and runbooks.json with seeded patterns for testing.
 import argparse
 import json
 import random
-import uuid
 from datetime import datetime, timedelta
-from typing import Any
-
 
 POLICIES = [
-    "HAL-NR-P0001", "HAL-NR-P0002", "HAL-NR-P0003", "HAL-NR-P0004",
-    "HAL-NR-P0005", "HAL-NR-P0006", "HAL-NR-P0007", "HAL-NR-P0008",
-    "HAL-NR-P0009", "HAL-NR-P0010", "HAL-NR-P0011", "HAL-NR-P0012",
-    "HAL-NR-P0013", "HAL-NR-P0014", "HAL-NR-P0015",
+    "HAL-NR-P0001",
+    "HAL-NR-P0002",
+    "HAL-NR-P0003",
+    "HAL-NR-P0004",
+    "HAL-NR-P0005",
+    "HAL-NR-P0006",
+    "HAL-NR-P0007",
+    "HAL-NR-P0008",
+    "HAL-NR-P0009",
+    "HAL-NR-P0010",
+    "HAL-NR-P0011",
+    "HAL-NR-P0012",
+    "HAL-NR-P0013",
+    "HAL-NR-P0014",
+    "HAL-NR-P0015",
 ]
 
 CONDITIONS = [
@@ -43,31 +51,63 @@ CONDITIONS = [
 ]
 
 ACCOUNT_IDS = [
-    "ACC-001", "ACC-002", "ACC-003", "ACC-004", "ACC-005",
-    "ACC-006", "ACC-007", "ACC-008", "ACC-009", "ACC-010",
+    "ACC-001",
+    "ACC-002",
+    "ACC-003",
+    "ACC-004",
+    "ACC-005",
+    "ACC-006",
+    "ACC-007",
+    "ACC-008",
+    "ACC-009",
+    "ACC-010",
 ]
 
 ENTITY_TEMPLATES = {
     "APM Service": [
-        "dwp-middleware-prod-{:02d}", "payment-api-prod-{:02d}", "auth-service-prod-{:02d}",
-        "order-service-prod-{:02d}", "inventory-api-prod-{:02d}", "notification-service-prod-{:02d}",
-        "user-profile-prod-{:02d}", "search-service-prod-{:02d}", "analytics-api-prod-{:02d}",
-        "billing-service-prod-{:02d}", "shipping-service-prod-{:02d}", "cart-service-prod-{:02d}",
+        "dwp-middleware-prod-{:02d}",
+        "payment-api-prod-{:02d}",
+        "auth-service-prod-{:02d}",
+        "order-service-prod-{:02d}",
+        "inventory-api-prod-{:02d}",
+        "notification-service-prod-{:02d}",
+        "user-profile-prod-{:02d}",
+        "search-service-prod-{:02d}",
+        "analytics-api-prod-{:02d}",
+        "billing-service-prod-{:02d}",
+        "shipping-service-prod-{:02d}",
+        "cart-service-prod-{:02d}",
     ],
     "Host": [
-        "ip-10-0-{:02d}-{:02d}.ec2.internal", "ip-10-1-{:02d}-{:02d}.ec2.internal",
-        "ip-10-2-{:02d}-{:02d}.ec2.internal", "ip-10-3-{:02d}-{:02d}.ec2.internal",
-        "vm-prod-{:03d}", "vm-staging-{:03d}", "k8s-worker-{:03d}", "k8s-master-{:03d}",
-        "db-primary-{:02d}", "db-replica-{:02d}", "cache-node-{:02d}", "lb-node-{:02d}",
+        "ip-10-0-{:02d}-{:02d}.ec2.internal",
+        "ip-10-1-{:02d}-{:02d}.ec2.internal",
+        "ip-10-2-{:02d}-{:02d}.ec2.internal",
+        "ip-10-3-{:02d}-{:02d}.ec2.internal",
+        "vm-prod-{:03d}",
+        "vm-staging-{:03d}",
+        "k8s-worker-{:03d}",
+        "k8s-master-{:03d}",
+        "db-primary-{:02d}",
+        "db-replica-{:02d}",
+        "cache-node-{:02d}",
+        "lb-node-{:02d}",
     ],
     "Gateway": [
-        "azure-gateway-{:02d}.cloudapp.net", "aws-alb-{:02d}.elb.amazonaws.com",
-        "cloudfront-{:02d}.cloudfront.net", "api-gateway-{:02d}.example.com",
-        "nginx-ingress-{:02d}", "traefik-{:02d}", "envoy-{:02d}",
+        "azure-gateway-{:02d}.cloudapp.net",
+        "aws-alb-{:02d}.elb.amazonaws.com",
+        "cloudfront-{:02d}.cloudfront.net",
+        "api-gateway-{:02d}.example.com",
+        "nginx-ingress-{:02d}",
+        "traefik-{:02d}",
+        "envoy-{:02d}",
     ],
     "AWX Job": [
-        "awx-deploy-{:03d}", "jenkins-build-{:03d}", "gitlab-pipeline-{:03d}",
-        "ansible-playbook-{:03d}", "terraform-apply-{:03d}", "helm-deploy-{:03d}",
+        "awx-deploy-{:03d}",
+        "jenkins-build-{:03d}",
+        "gitlab-pipeline-{:03d}",
+        "ansible-playbook-{:03d}",
+        "terraform-apply-{:03d}",
+        "helm-deploy-{:03d}",
     ],
 }
 
@@ -114,14 +154,14 @@ def generate_alert(
     rng: random.Random,
     window_start: datetime,
     window_end: datetime,
-    policy: str = None,
-    condition: str = None,
-    entity_type: str = None,
-    account_id: str = None,
-    opened_at: datetime = None,
-    priority: str = None,
-    threshold_value: float = None,
-    observed_value: float = None,
+    policy: str | None = None,
+    condition: str | None = None,
+    entity_type: str | None = None,
+    account_id: str | None = None,
+    opened_at: datetime | None = None,
+    priority: str | None = None,
+    threshold_value: float | None = None,
+    observed_value: float | None = None,
 ) -> dict:
     if opened_at is None:
         total_seconds = int((window_end - window_start).total_seconds())
@@ -141,7 +181,7 @@ def generate_alert(
     violation_id = generate_violation_id(rng)
 
     duration_minutes = rng.randint(5, 240)
-    closed_at = opened_at + timedelta(minutes=duration_minutes)
+    closed_at: datetime | None = opened_at + timedelta(minutes=duration_minutes)
     if rng.random() < 0.15:
         closed_at = None
 
@@ -168,7 +208,9 @@ def generate_alert(
     }
 
 
-def add_messiness(alerts: list, rng: random.Random, messiness_rate: float = 0.09) -> tuple:
+def add_messiness(
+    alerts: list, rng: random.Random, messiness_rate: float = 0.09
+) -> tuple:
     messy_count = 0
     n = len(alerts)
     num_messy = int(n * messiness_rate)
@@ -177,7 +219,9 @@ def add_messiness(alerts: list, rng: random.Random, messiness_rate: float = 0.09
 
     for idx in indices:
         alert = alerts[idx]
-        mess_type = rng.choice(["null_threshold", "null_observed", "bad_timestamp_order", "duplicate"])
+        mess_type = rng.choice(
+            ["null_threshold", "null_observed", "bad_timestamp_order", "duplicate"]
+        )
 
         if mess_type == "null_threshold" and alert["threshold_value"] is not None:
             alert["threshold_value"] = None
@@ -186,10 +230,16 @@ def add_messiness(alerts: list, rng: random.Random, messiness_rate: float = 0.09
             alert["observed_value"] = None
             messy_count += 1
         elif mess_type == "bad_timestamp_order" and alert["closed_at_utc"]:
-            opened = datetime.fromisoformat(alert["opened_at_utc"].replace("Z", "+00:00"))
-            closed = datetime.fromisoformat(alert["closed_at_utc"].replace("Z", "+00:00"))
+            opened = datetime.fromisoformat(
+                alert["opened_at_utc"].replace("Z", "+00:00")
+            )
+            closed = datetime.fromisoformat(
+                alert["closed_at_utc"].replace("Z", "+00:00")
+            )
             if closed > opened:
-                alert["closed_at_utc"] = format_iso(opened - timedelta(minutes=rng.randint(1, 60)))
+                alert["closed_at_utc"] = format_iso(
+                    opened - timedelta(minutes=rng.randint(1, 60))
+                )
                 messy_count += 1
         elif mess_type == "duplicate":
             pass
@@ -199,11 +249,13 @@ def add_messiness(alerts: list, rng: random.Random, messiness_rate: float = 0.09
         original = alerts[idx].copy()
         original["violation_id"] = alerts[idx]["violation_id"]
         original["opened_at_utc"] = format_iso(
-            datetime.fromisoformat(original["opened_at_utc"].replace("Z", "+00:00")) + timedelta(minutes=rng.randint(1, 30))
+            datetime.fromisoformat(original["opened_at_utc"].replace("Z", "+00:00"))
+            + timedelta(minutes=rng.randint(1, 30))
         )
         if original["closed_at_utc"]:
             original["closed_at_utc"] = format_iso(
-                datetime.fromisoformat(original["closed_at_utc"].replace("Z", "+00:00")) + timedelta(minutes=rng.randint(1, 30))
+                datetime.fromisoformat(original["closed_at_utc"].replace("Z", "+00:00"))
+                + timedelta(minutes=rng.randint(1, 30))
             )
         alerts.append(original)
         messy_count += 1
@@ -213,11 +265,12 @@ def add_messiness(alerts: list, rng: random.Random, messiness_rate: float = 0.09
     return alerts, messy_count
 
 
-def generate_recurring_noise(rng: random.Random, window_start: datetime, window_end: datetime) -> list:
+def generate_recurring_noise(
+    rng: random.Random, window_start: datetime, window_end: datetime
+) -> list:
     alerts = []
     recurring_pairs = rng.sample(
-        [(c, a) for c, _ in CONDITIONS for a in ACCOUNT_IDS],
-        rng.randint(6, 8)
+        [(c, a) for c, _ in CONDITIONS for a in ACCOUNT_IDS], rng.randint(6, 8)
     )
 
     for condition, account_id in recurring_pairs:
@@ -227,46 +280,72 @@ def generate_recurring_noise(rng: random.Random, window_start: datetime, window_
 
         for _ in range(occurrences):
             alert = generate_alert(
-                rng, window_start, window_end,
-                policy=policy, condition=condition, entity_type=entity_type,
-                account_id=account_id
+                rng,
+                window_start,
+                window_end,
+                policy=policy,
+                condition=condition,
+                entity_type=entity_type,
+                account_id=account_id,
             )
             alerts.append(alert)
 
     return alerts
 
 
-def generate_correlated_clusters(rng: random.Random, window_start: datetime, window_end: datetime) -> list:
+def generate_correlated_clusters(
+    rng: random.Random, window_start: datetime, window_end: datetime
+) -> list:
     alerts = []
     cluster_conditions = [
-        [("Host CPU Utilization", "Host"), ("Azure Gateway Latency", "Gateway"), ("AWX Job Failure Rate", "AWX Job")],
-        [("Host Memory Utilization", "Host"), ("AWS ALB Latency", "Gateway"), ("Jenkins Build Failure Rate", "AWX Job")],
-        [("Host Disk Usage", "Host"), ("CloudFront Latency", "Gateway"), ("GitLab Pipeline Failure Rate", "AWX Job")],
+        [
+            ("Host CPU Utilization", "Host"),
+            ("Azure Gateway Latency", "Gateway"),
+            ("AWX Job Failure Rate", "AWX Job"),
+        ],
+        [
+            ("Host Memory Utilization", "Host"),
+            ("AWS ALB Latency", "Gateway"),
+            ("Jenkins Build Failure Rate", "AWX Job"),
+        ],
+        [
+            ("Host Disk Usage", "Host"),
+            ("CloudFront Latency", "Gateway"),
+            ("GitLab Pipeline Failure Rate", "AWX Job"),
+        ],
     ]
 
     for cluster in cluster_conditions:
         account_id = rng.choice(ACCOUNT_IDS)
-        base_time = window_start + timedelta(seconds=rng.randint(0, int((window_end - window_start).total_seconds())))
+        base_time = window_start + timedelta(
+            seconds=rng.randint(0, int((window_end - window_start).total_seconds()))
+        )
         policy = rng.choice(POLICIES)
 
         for condition, entity_type in cluster:
             offset_minutes = rng.randint(0, 5)
             opened_at = base_time + timedelta(minutes=offset_minutes)
             alert = generate_alert(
-                rng, window_start, window_end,
-                policy=policy, condition=condition, entity_type=entity_type,
-                account_id=account_id, opened_at=opened_at
+                rng,
+                window_start,
+                window_end,
+                policy=policy,
+                condition=condition,
+                entity_type=entity_type,
+                account_id=account_id,
+                opened_at=opened_at,
             )
             alerts.append(alert)
 
     return alerts
 
 
-def generate_bad_threshold_alerts(rng: random.Random, window_start: datetime, window_end: datetime) -> list:
+def generate_bad_threshold_alerts(
+    rng: random.Random, window_start: datetime, window_end: datetime
+) -> list:
     alerts = []
     bad_conditions = rng.sample(
-        [c for c, et in CONDITIONS if et in ("APM Service", "Host", "Gateway")],
-        2
+        [c for c, et in CONDITIONS if et in ("APM Service", "Host", "Gateway")], 2
     )
 
     for condition in bad_conditions:
@@ -279,20 +358,29 @@ def generate_bad_threshold_alerts(rng: random.Random, window_start: datetime, wi
         for _ in range(occurrences):
             observed = round(threshold * rng.uniform(1.4, 1.8), 2)
             alert = generate_alert(
-                rng, window_start, window_end,
-                policy=policy, condition=condition, entity_type=entity_type,
-                account_id=account_id, threshold_value=threshold, observed_value=observed
+                rng,
+                window_start,
+                window_end,
+                policy=policy,
+                condition=condition,
+                entity_type=entity_type,
+                account_id=account_id,
+                threshold_value=threshold,
+                observed_value=observed,
             )
             alerts.append(alert)
 
     return alerts
 
 
-def generate_alert_storm(rng: random.Random, window_start: datetime, window_end: datetime) -> list:
+def generate_alert_storm(
+    rng: random.Random, window_start: datetime, window_end: datetime
+) -> list:
     alerts = []
     account_id = rng.choice(ACCOUNT_IDS)
-    storm_start = window_start + timedelta(days=rng.randint(0, 6), hours=rng.randint(0, 23), minutes=rng.randint(0, 50))
-    storm_end = storm_start + timedelta(minutes=10)
+    storm_start = window_start + timedelta(
+        days=rng.randint(0, 6), hours=rng.randint(0, 23), minutes=rng.randint(0, 50)
+    )
 
     storm_conditions = rng.sample(CONDITIONS, rng.randint(5, 8))
     num_alerts = rng.randint(15, 20)
@@ -302,16 +390,23 @@ def generate_alert_storm(rng: random.Random, window_start: datetime, window_end:
         policy = rng.choice(POLICIES)
         opened_at = storm_start + timedelta(seconds=rng.randint(0, 600))
         alert = generate_alert(
-            rng, window_start, window_end,
-            policy=policy, condition=condition, entity_type=entity_type,
-            account_id=account_id, opened_at=opened_at
+            rng,
+            window_start,
+            window_end,
+            policy=policy,
+            condition=condition,
+            entity_type=entity_type,
+            account_id=account_id,
+            opened_at=opened_at,
         )
         alerts.append(alert)
 
     return alerts
 
 
-def generate_background_noise(rng: random.Random, window_start: datetime, window_end: datetime, count: int) -> list:
+def generate_background_noise(
+    rng: random.Random, window_start: datetime, window_end: datetime, count: int
+) -> list:
     alerts = []
     for _ in range(count):
         alert = generate_alert(rng, window_start, window_end)
@@ -346,7 +441,9 @@ def generate_alerts(seed: int = 42) -> tuple:
     target_total = rng.randint(400, 600)
     background_count = target_total - len(all_alerts)
     if background_count > 0:
-        background = generate_background_noise(rng, window_start, window_end, background_count)
+        background = generate_background_noise(
+            rng, window_start, window_end, background_count
+        )
         all_alerts.extend(background)
 
     all_alerts, messy_count = add_messiness(all_alerts, rng)
@@ -372,25 +469,36 @@ def generate_runbooks(alerts: list, seed: int = 42) -> tuple:
 
     runbooks = []
     for policy in policies_with_runbook:
-        runbooks.append({
-            "policy": policy,
-            "runbook_url": f"https://runbooks.example.com/{policy.lower()}"
-        })
+        runbooks.append(
+            {
+                "policy": policy,
+                "runbook_url": f"https://runbooks.example.com/{policy.lower()}",
+            }
+        )
 
     policies_without_runbook = policies_in_alerts - policies_with_runbook
 
     return runbooks, len(policies_without_runbook)
 
 
-def write_json(data: list, filepath: str):
+def write_json(data: list, filepath: str) -> None:
     with open(filepath, "w") as f:
         json.dump(data, f, indent=2)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Generate synthetic alert data for Alert Noise Analyzer")
-    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
-    parser.add_argument("--output-dir", type=str, default="data", help="Output directory for generated files")
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Generate synthetic alert data for Alert Noise Analyzer"
+    )
+    parser.add_argument(
+        "--seed", type=int, default=42, help="Random seed for reproducibility"
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="data",
+        help="Output directory for generated files",
+    )
     args = parser.parse_args()
 
     alerts, stats = generate_alerts(args.seed)

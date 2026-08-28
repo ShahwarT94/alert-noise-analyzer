@@ -7,7 +7,8 @@ with open("data/alerts.json") as f:
 target = "Azure Gateway Latency"
 
 matches = [
-    a for a in alerts
+    a
+    for a in alerts
     if a.get("condition") == target
     and a.get("threshold_value") is not None
     and a.get("observed_value") is not None

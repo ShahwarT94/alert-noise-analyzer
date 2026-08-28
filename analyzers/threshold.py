@@ -8,13 +8,13 @@ import argparse
 import json
 from collections import defaultdict
 from statistics import median
-from typing import Any
 
 
 def load_alerts(filepath: str) -> list[dict]:
     """Load alerts from a JSON file."""
-    with open(filepath, "r") as f:
-        return json.load(f)
+    with open(filepath) as f:
+        data: list[dict] = json.load(f)
+    return data
 
 
 def detect_threshold_issues(
@@ -50,10 +50,12 @@ def detect_threshold_issues(
         except (ValueError, TypeError):
             continue
 
-        condition_data[condition].append({
-            "threshold": threshold,
-            "observed": observed,
-        })
+        condition_data[condition].append(
+            {
+                "threshold": threshold,
+                "observed": observed,
+            }
+        )
 
     findings = []
 
@@ -67,7 +69,7 @@ def detect_threshold_issues(
         threshold_counts: dict[float, int] = {}
         for t in thresholds:
             threshold_counts[t] = threshold_counts.get(t, 0) + 1
-        configured_threshold = max(threshold_counts, key=threshold_counts.get)
+        configured_threshold = max(threshold_counts, key=lambda t: threshold_counts[t])
         configured_threshold_count = threshold_counts[configured_threshold]
 
         if configured_threshold_count < 2:
@@ -81,7 +83,9 @@ def detect_threshold_issues(
         if configured_threshold == 0:
             continue
 
-        deviation_pct = abs(median_observed - configured_threshold) / configured_threshold
+        deviation_pct = (
+            abs(median_observed - configured_threshold) / configured_threshold
+        )
 
         if deviation_pct < deviation_ratio:
             continue
@@ -91,14 +95,16 @@ def detect_threshold_issues(
         else:
             direction = "under-sensitive"
 
-        findings.append({
-            "condition": condition,
-            "configured_threshold": configured_threshold,
-            "median_observed": round(median_observed, 2),
-            "sample_size": len(records),
-            "deviation_pct": round(deviation_pct * 100, 2),
-            "direction": direction,
-        })
+        findings.append(
+            {
+                "condition": condition,
+                "configured_threshold": configured_threshold,
+                "median_observed": round(median_observed, 2),
+                "sample_size": len(records),
+                "deviation_pct": round(deviation_pct * 100, 2),
+                "direction": direction,
+            }
+        )
 
     findings.sort(key=lambda f: f["deviation_pct"], reverse=True)
     return findings
@@ -110,7 +116,9 @@ def print_findings(findings: list[dict]) -> None:
         print("No threshold issues detected.")
         return
 
-    print(f"\n{'Condition':<40} {'Threshold':>10} {'Median':>10} {'Samples':>7} {'Dev%':>7} {'Direction'}")
+    print(
+        f"\n{'Condition':<40} {'Threshold':>10} {'Median':>10} {'Samples':>7} {'Dev%':>7} {'Direction'}"
+    )
     print("-" * 95)
     for f in findings:
         condition = f["condition"][:39]
@@ -119,15 +127,24 @@ def print_findings(findings: list[dict]) -> None:
         samples = f["sample_size"]
         dev_pct = f["deviation_pct"]
         direction = f["direction"]
-        print(f"{condition:<40} {threshold:>10.2f} {median_obs:>10.2f} {samples:>7} {dev_pct:>7.2f} {direction}")
+        print(
+            f"{condition:<40} {threshold:>10.2f} {median_obs:>10.2f} {samples:>7} {dev_pct:>7.2f} {direction}"
+        )
 
     print(f"\nTotal findings: {len(findings)}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Detect threshold sanity issues")
-    parser.add_argument("--input", type=str, default="data/alerts.json", help="Path to alerts JSON file")
-    parser.add_argument("--deviation-ratio", type=float, default=0.3, help="Deviation ratio threshold (0.3 = 30 percent)")
+    parser.add_argument(
+        "--input", type=str, default="data/alerts.json", help="Path to alerts JSON file"
+    )
+    parser.add_argument(
+        "--deviation-ratio",
+        type=float,
+        default=0.3,
+        help="Deviation ratio threshold (0.3 = 30 percent)",
+    )
     args = parser.parse_args()
 
     alerts = load_alerts(args.input)

@@ -8,13 +8,13 @@ opening within a short time window (cascading incidents).
 import argparse
 import json
 from datetime import datetime, timedelta
-from typing import Any
 
 
 def load_alerts(filepath: str) -> list[dict]:
     """Load alerts from a JSON file."""
-    with open(filepath, "r") as f:
-        return json.load(f)
+    with open(filepath) as f:
+        data: list[dict] = json.load(f)
+    return data
 
 
 def detect_correlated_clusters(
@@ -53,14 +53,16 @@ def detect_correlated_clusters(
 
         if account_id not in by_account:
             by_account[account_id] = []
-        by_account[account_id].append({
-            "condition": condition,
-            "violation_id": violation_id,
-            "opened_at": opened_at,
-            "opened_at_str": opened_at_str,
-        })
+        by_account[account_id].append(
+            {
+                "condition": condition,
+                "violation_id": violation_id,
+                "opened_at": opened_at,
+                "opened_at_str": opened_at_str,
+            }
+        )
 
-    findings = []
+    findings: list[dict] = []
 
     for account_id, records in by_account.items():
         records.sort(key=lambda r: r["opened_at"])
@@ -105,14 +107,16 @@ def _add_finding(findings: list[dict], account_id: str, cluster: list[dict]) -> 
             unique_violations.append(vid)
             seen_violations.add(vid)
 
-    findings.append({
-        "account_id": account_id,
-        "cluster_start": cluster[0]["opened_at_str"],
-        "cluster_end": cluster[-1]["opened_at_str"],
-        "alert_count": len(cluster),
-        "conditions_involved": unique_conditions,
-        "violation_ids": unique_violations,
-    })
+    findings.append(
+        {
+            "account_id": account_id,
+            "cluster_start": cluster[0]["opened_at_str"],
+            "cluster_end": cluster[-1]["opened_at_str"],
+            "alert_count": len(cluster),
+            "conditions_involved": unique_conditions,
+            "violation_ids": unique_violations,
+        }
+    )
 
 
 def print_findings(findings: list[dict]) -> None:
@@ -136,10 +140,14 @@ def print_findings(findings: list[dict]) -> None:
     print(f"\nTotal clusters: {len(findings)}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Detect correlated alert clusters")
-    parser.add_argument("--input", type=str, default="data/alerts.json", help="Path to alerts JSON file")
-    parser.add_argument("--window-minutes", type=int, default=5, help="Cluster window in minutes")
+    parser.add_argument(
+        "--input", type=str, default="data/alerts.json", help="Path to alerts JSON file"
+    )
+    parser.add_argument(
+        "--window-minutes", type=int, default=5, help="Cluster window in minutes"
+    )
     parser.add_argument("--min-size", type=int, default=2, help="Minimum cluster size")
     args = parser.parse_args()
 

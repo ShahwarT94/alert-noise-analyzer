@@ -4,20 +4,18 @@ Tests for the threshold sanity checker.
 """
 
 import pytest
+
 from analyzers.threshold import detect_threshold_issues
 
 
 def make_alert(
-    condition: str,
-    threshold_value: float,
-    observed_value: float,
-    **kwargs
+    condition: str, threshold_value: float, observed_value: float, **kwargs
 ) -> dict:
     return {
         "condition": condition,
         "threshold_value": threshold_value,
         "observed_value": observed_value,
-        **kwargs
+        **kwargs,
     }
 
 
@@ -128,8 +126,16 @@ def test_invalid_numeric_values_skipped():
         make_alert("Bad Values", 80.0, 30.0),
         make_alert("Bad Values", 80.0, 32.0),
         make_alert("Bad Values", 80.0, 28.0),
-        {"condition": "Bad Values", "threshold_value": "not-a-number", "observed_value": 30.0},
-        {"condition": "Bad Values", "threshold_value": 80.0, "observed_value": "also-bad"},
+        {
+            "condition": "Bad Values",
+            "threshold_value": "not-a-number",
+            "observed_value": 30.0,
+        },
+        {
+            "condition": "Bad Values",
+            "threshold_value": 80.0,
+            "observed_value": "also-bad",
+        },
     ]
 
     findings = detect_threshold_issues(alerts, deviation_ratio=0.3)

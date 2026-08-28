@@ -1,0 +1,73 @@
+[project]
+name = "alert-noise-analyzer"
+version = "0.1.0"
+description = "Deterministic alert-triage feature pipeline with an evaluation-first LLM layer (in progress)."
+requires-python = ">=3.14"
+
+# Runtime is standard-library only, by design (see CLAUDE.md invariants).
+# Nothing may be added here without an explicit decision.
+dependencies = []
+
+# Dev tooling only. These are never imported by generator/, analyzers/,
+# report/, or cli.py. Install with:  pip install --group dev
+[dependency-groups]
+dev = [
+    "ruff>=0.16",
+    "black>=24.0",
+    "mypy>=1.11",
+    "pytest>=9.0",
+    "pytest-cov>=7.0",
+]
+
+# Runtime requires 3.14, but the formatter/linter target is pinned one minor
+# behind on purpose: py314 lets black rewrite `except (A, B):` to the bare
+# `except A, B:` form, which is valid but reads like the Python 2 bind syntax
+# and churns the detector error handlers. py313 keeps formatting to the
+# widely-recognized syntax floor. Bump both when that tradeoff no longer matters.
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+# E/W pycodestyle, F pyflakes (unused imports/vars), I import sorting,
+# UP pyupgrade (modern syntax), B bugbear (likely bugs).
+select = ["E", "W", "F", "I", "UP", "B"]
+# E501 (line length) is left to black. Ruff cannot reflow string literals or
+# comments, and the lines that overflow here are aligned table f-strings and
+# argparse help text where a hand-wrap would risk changing printed output.
+ignore = ["E501"]
+
+[tool.black]
+target-version = ["py313"]
+line-length = 88
+
+[tool.mypy]
+python_version = "3.14"
+# Scope: the runtime packages only. Test modules are not type-checked in
+# Phase 0 (they would require annotating every fixture helper); revisit later.
+files = ["generator", "analyzers", "report", "cli.py"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unused_configs = true
+no_implicit_optional = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+# Repo root on sys.path so `pytest` and `python3 -m pytest` both resolve the
+# top-level packages (generator/, analyzers/, report/) without an install step.
+pythonpath = ["."]
+
+[tool.coverage.run]
+branch = true
+# cli.py is exercised only as a script (no import-level tests yet), so it is
+# not in the coverage source set; add it once CLI integration tests land.
+source = ["generator", "analyzers", "report"]
+
+[tool.coverage.report]
+show_missing = true
+precision = 1

@@ -10,7 +10,8 @@ target_condition = "Azure Gateway Latency"
 target_account = "ACC-004"
 
 matches = [
-    a for a in alerts
+    a
+    for a in alerts
     if a.get("condition") == target_condition and a.get("account_id") == target_account
 ]
 

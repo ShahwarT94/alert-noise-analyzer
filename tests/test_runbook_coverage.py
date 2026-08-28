@@ -4,6 +4,7 @@ Tests for the runbook coverage checker.
 """
 
 import pytest
+
 from analyzers.runbook_coverage import detect_runbook_gaps
 
 
@@ -123,7 +124,10 @@ def test_malformed_runbook_entries_skipped():
 
 def test_no_alerts_returns_empty():
     """Test with no alerts returns empty list."""
-    findings = detect_runbook_gaps([], [{"policy": "POL-001", "runbook_url": "https://runbooks.example.com/pol-001"}])
+    findings = detect_runbook_gaps(
+        [],
+        [{"policy": "POL-001", "runbook_url": "https://runbooks.example.com/pol-001"}],
+    )
     assert findings == []
 
 

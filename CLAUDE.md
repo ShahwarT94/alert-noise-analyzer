@@ -21,10 +21,12 @@ starting a new phase. Do not read it for incremental work.
 ## Commands
 
 Python 3.14, pytest 9.1.1. **Standard library only at runtime** — there is
-no requirements file, virtualenv, or build step, and no third-party runtime
-dependency may be added without asking. Dev tooling (linters, type
-checkers, test tooling) is a separate category and is introduced in Phase 0;
-it does not count against the stdlib-only runtime rule.
+no runtime dependency and none may be added without asking. Dev tooling
+(ruff, black, mypy, pytest, pytest-cov) is a separate category: it lives in
+the `dev` dependency group in `pyproject.toml`, is never imported by
+`generator/`, `analyzers/`, `report/`, or `cli.py`, and does not count
+against the stdlib-only runtime rule. Install it with `pip install --group
+dev` (into a throwaway venv; `.venv-dev/` is gitignored).
 
 ```bash
 # Run the full test suite
@@ -47,12 +49,21 @@ python3 -m analyzers.recurring --input data/alerts.json
 python3 -m analyzers.correlation --input data/alerts.json --window-minutes 5 --min-size 2
 python3 -m analyzers.threshold --input data/alerts.json --deviation-ratio 0.3
 python3 -m analyzers.runbook_coverage --alerts data/alerts.json --runbooks data/runbooks.json
+
+# Lint / format / type-check / coverage — the same four gates CI enforces
+ruff check .
+black --check .          # drop --check to apply
+mypy                     # scope comes from [tool.mypy] files= in pyproject.toml
+pytest --cov --cov-report=term-missing
 ```
 
 `cli.py` is the top-level entry point and is run as a script (`python3 cli.py`), not a module. Everything else is run with `-m`.
 
-Lint, format, and type-check commands land in Phase 0. Until then they do
-not exist; do not attempt to run them.
+CI (`.github/workflows/ci.yml`) runs ruff, black `--check`, mypy, and pytest
+with coverage on every push and PR; any one failing fails the build. Run all
+four locally before pushing. ruff/black `target-version` is pinned to py313
+(one minor behind runtime) on purpose — see the comment in `pyproject.toml`.
+mypy checks the runtime packages only; `tests/` is not yet type-checked.
 
 ## Architecture
 

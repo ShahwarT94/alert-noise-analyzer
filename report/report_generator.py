@@ -4,13 +4,12 @@ Report generator for Alert Noise Analyzer.
 Consolidates all four detectors' findings into a readable markdown report.
 """
 
-from typing import Any
-
-
 DEFAULT_DISPLAY_CAP = 15
 
 
-def _format_recurring_section(findings: list[dict], cap: int = DEFAULT_DISPLAY_CAP) -> str:
+def _format_recurring_section(
+    findings: list[dict], cap: int = DEFAULT_DISPLAY_CAP
+) -> str:
     """Format the recurring noise section."""
     lines = []
     if not findings:
@@ -36,7 +35,9 @@ def _format_recurring_section(findings: list[dict], cap: int = DEFAULT_DISPLAY_C
     return "\n".join(lines)
 
 
-def _format_correlation_section(findings: list[dict], cap: int = DEFAULT_DISPLAY_CAP) -> str:
+def _format_correlation_section(
+    findings: list[dict], cap: int = DEFAULT_DISPLAY_CAP
+) -> str:
     """Format the correlated clusters section."""
     lines = []
     if not findings:
@@ -45,8 +46,12 @@ def _format_correlation_section(findings: list[dict], cap: int = DEFAULT_DISPLAY
 
     lines.append(f"Top {min(len(findings), cap)} clusters (of {len(findings)} total):")
     lines.append("")
-    lines.append("| Account | Cluster Start | Cluster End | Alert Count | Conditions Involved |")
-    lines.append("|---------|---------------|-------------|-------------|---------------------|")
+    lines.append(
+        "| Account | Cluster Start | Cluster End | Alert Count | Conditions Involved |"
+    )
+    lines.append(
+        "|---------|---------------|-------------|-------------|---------------------|"
+    )
 
     for f in findings[:cap]:
         account = f["account_id"]
@@ -64,17 +69,25 @@ def _format_correlation_section(findings: list[dict], cap: int = DEFAULT_DISPLAY
     return "\n".join(lines)
 
 
-def _format_threshold_section(findings: list[dict], cap: int = DEFAULT_DISPLAY_CAP) -> str:
+def _format_threshold_section(
+    findings: list[dict], cap: int = DEFAULT_DISPLAY_CAP
+) -> str:
     """Format the threshold tuning candidates section."""
     lines = []
     if not findings:
         lines.append("No threshold tuning candidates detected above threshold.")
         return "\n".join(lines)
 
-    lines.append(f"Top {min(len(findings), cap)} candidates (of {len(findings)} total):")
+    lines.append(
+        f"Top {min(len(findings), cap)} candidates (of {len(findings)} total):"
+    )
     lines.append("")
-    lines.append("| Condition | Configured Threshold | Median Observed | Direction | Deviation % |")
-    lines.append("|-----------|----------------------|-----------------|-----------|-------------|")
+    lines.append(
+        "| Condition | Configured Threshold | Median Observed | Direction | Deviation % |"
+    )
+    lines.append(
+        "|-----------|----------------------|-----------------|-----------|-------------|"
+    )
 
     for f in findings[:cap]:
         condition = f["condition"][:40]
@@ -82,7 +95,9 @@ def _format_threshold_section(findings: list[dict], cap: int = DEFAULT_DISPLAY_C
         median_obs = f["median_observed"]
         direction = f["direction"]
         dev_pct = f["deviation_pct"]
-        lines.append(f"| {condition} | {threshold:.2f} | {median_obs:.2f} | {direction} | {dev_pct:.2f}% |")
+        lines.append(
+            f"| {condition} | {threshold:.2f} | {median_obs:.2f} | {direction} | {dev_pct:.2f}% |"
+        )
 
     if len(findings) > cap:
         lines.append(f"\n... and {len(findings) - cap} more")
@@ -90,7 +105,9 @@ def _format_threshold_section(findings: list[dict], cap: int = DEFAULT_DISPLAY_C
     return "\n".join(lines)
 
 
-def _format_runbook_section(findings: list[dict], cap: int = DEFAULT_DISPLAY_CAP) -> str:
+def _format_runbook_section(
+    findings: list[dict], cap: int = DEFAULT_DISPLAY_CAP
+) -> str:
     """Format the runbook coverage gaps section."""
     lines = []
     if not findings:
@@ -132,7 +149,9 @@ def generate_report(
 
     # Summary
     sections.append("## Summary")
-    sections.append(f"- Recurring Noise (N+ in window): {len(recurring_findings)} condition/account pairs")
+    sections.append(
+        f"- Recurring Noise (N+ in window): {len(recurring_findings)} condition/account pairs"
+    )
     sections.append(f"- Likely Single-Incident Clusters: {len(correlation_findings)}")
     sections.append(f"- Threshold Tuning Candidates: {len(threshold_findings)}")
     sections.append(f"- Policies Missing Runbooks: {len(runbook_findings)}")

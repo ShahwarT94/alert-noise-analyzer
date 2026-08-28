@@ -3,24 +3,22 @@
 Tests for the recurring pattern detector.
 """
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
+
 from analyzers.recurring import detect_recurring_patterns
 
 
 def make_alert(
-    violation_id: str,
-    condition: str,
-    account_id: str,
-    opened_at: datetime,
-    **kwargs
+    violation_id: str, condition: str, account_id: str, opened_at: datetime, **kwargs
 ) -> dict:
     return {
         "violation_id": violation_id,
         "condition": condition,
         "account_id": account_id,
         "opened_at_utc": opened_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        **kwargs
+        **kwargs,
     }
 
 
@@ -48,7 +46,14 @@ def test_detect_recurring_patterns_basic():
     assert findings[0]["condition"] == "High CPU"
     assert findings[0]["account_id"] == "ACC-001"
     assert findings[0]["occurrence_count"] == 6
-    assert findings[0]["violation_ids"] == ["V-001", "V-002", "V-003", "V-004", "V-005", "V-006"]
+    assert findings[0]["violation_ids"] == [
+        "V-001",
+        "V-002",
+        "V-003",
+        "V-004",
+        "V-005",
+        "V-006",
+    ]
 
 
 def test_duplicate_violation_ids_not_double_counted():
@@ -76,7 +81,11 @@ def test_missing_condition_skipped():
     base_time = datetime(2026, 8, 1, 12, 0, 0)
 
     alerts = [
-        {"violation_id": "V-001", "account_id": "ACC-001", "opened_at_utc": base_time.strftime("%Y-%m-%dT%H:%M:%SZ")},
+        {
+            "violation_id": "V-001",
+            "account_id": "ACC-001",
+            "opened_at_utc": base_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        },
         make_alert("V-002", "High CPU", "ACC-001", base_time + timedelta(hours=1)),
         make_alert("V-003", "High CPU", "ACC-001", base_time + timedelta(hours=2)),
         make_alert("V-004", "High CPU", "ACC-001", base_time + timedelta(hours=3)),
@@ -130,7 +139,12 @@ def test_bad_timestamp_format_skipped():
 
     alerts = [
         make_alert("V-001", "High CPU", "ACC-001", base_time),
-        {"violation_id": "V-002", "condition": "High CPU", "account_id": "ACC-001", "opened_at_utc": "not-a-date"},
+        {
+            "violation_id": "V-002",
+            "condition": "High CPU",
+            "account_id": "ACC-001",
+            "opened_at_utc": "not-a-date",
+        },
         make_alert("V-003", "High CPU", "ACC-001", base_time + timedelta(hours=1)),
         make_alert("V-004", "High CPU", "ACC-001", base_time + timedelta(hours=2)),
         make_alert("V-005", "High CPU", "ACC-001", base_time + timedelta(hours=3)),
@@ -149,7 +163,13 @@ def test_missing_account_id_skipped():
 
     alerts = [
         make_alert("V-001", "High CPU", "ACC-001", base_time),
-        {"violation_id": "V-002", "condition": "High CPU", "opened_at_utc": (base_time + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")},
+        {
+            "violation_id": "V-002",
+            "condition": "High CPU",
+            "opened_at_utc": (base_time + timedelta(hours=1)).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            ),
+        },
         make_alert("V-003", "High CPU", "ACC-001", base_time + timedelta(hours=2)),
         make_alert("V-004", "High CPU", "ACC-001", base_time + timedelta(hours=3)),
         make_alert("V-005", "High CPU", "ACC-001", base_time + timedelta(hours=4)),
@@ -187,11 +207,23 @@ def test_findings_sorted_by_occurrence_count_descending():
 
     alerts = []
     for i in range(5):
-        alerts.append(make_alert(f"V-{i:03d}", "Medium CPU", "ACC-001", base_time + timedelta(hours=i)))
+        alerts.append(
+            make_alert(
+                f"V-{i:03d}", "Medium CPU", "ACC-001", base_time + timedelta(hours=i)
+            )
+        )
     for i in range(8):
-        alerts.append(make_alert(f"V-{i+5:03d}", "High CPU", "ACC-001", base_time + timedelta(hours=i)))
+        alerts.append(
+            make_alert(
+                f"V-{i+5:03d}", "High CPU", "ACC-001", base_time + timedelta(hours=i)
+            )
+        )
     for i in range(3):
-        alerts.append(make_alert(f"V-{i+13:03d}", "Low CPU", "ACC-001", base_time + timedelta(hours=i)))
+        alerts.append(
+            make_alert(
+                f"V-{i+13:03d}", "Low CPU", "ACC-001", base_time + timedelta(hours=i)
+            )
+        )
 
     findings = detect_recurring_patterns(alerts, window_days=7, min_occurrences=3)
 
