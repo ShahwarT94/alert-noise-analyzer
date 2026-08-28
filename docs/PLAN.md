@@ -295,7 +295,17 @@ plus a single-page frontend. Do not spend two weeks on design systems.
 Actions workflow, ruff/black/mypy/pytest, branch protection, coverage.
 Deliverable: green badge, failing builds block merges.
 
-**Phase 1: Ground truth and hard cases (~1-1.5 weeks)**
+**Phase 1a: Generator hardening (~3 days)**
+Real test coverage on `generator/synthetic_data.py` before anything is
+built on top of it. Determinism has three tests; the seeding logic for all
+four patterns, the messiness injection, the ratios, and schema conformance
+have none. Every metric in Phase 2 and every comparison in Phase 5 inherits
+whatever is wrong in this module, and a generator bug becomes
+indistinguishable from a model result once the agent is in the loop.
+Deliverable: verified coverage of all four seeded patterns, messiness
+injection rates, ratios, schema conformance, and the time window.
+
+**Phase 1b: Ground truth and hard cases (~1-1.5 weeks)**
 Ingestion adapter interface. Generator emits labels.json. Generator
 extended with the five hard-case types from section 2. Synthetic service
 dependency topology.

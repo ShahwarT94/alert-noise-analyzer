@@ -79,7 +79,17 @@ Produces `data/alerts.json` (~400–600 alert records) and `data/runbooks.json`.
 | Bad thresholds (observed values consistently 1.4–1.8× the configured threshold) | `analyzers/threshold.py` |
 | An alert storm (15–20 alerts on one account in a 10-min burst) | `analyzers/correlation.py` |
 
-`add_messiness()` then corrupts ~9% of records — null `threshold_value`/`observed_value`, reversed open/close timestamps, near-duplicate rows. Detectors are expected to tolerate all of this. The analysis window is hardcoded to the 7 days ending `2026-08-15T23:59:59Z`. RNG is fully seeded for reproducibility; runbooks use `seed + 1` and cover ~70% of policies.
+`add_messiness()` then corrupts ~9% of records — null `threshold_value`/`observed_value`, reversed open/close timestamps, near-duplicate rows. Detectors are expected to tolerate all of this. The analysis window is hardcoded to the 7 days ending `2026-08-15T23:59:59Z`. RNG is fully seeded and reproducible across processes; runbooks use
+    `seed + 1`. Determinism depends on `sorted()` ordering before any
+    `rng.sample()` call. Do not reintroduce `set()` iteration into any code
+    path that feeds generated output.
+
+`violation_id` is unique across base generation (`_ensure_unique_violation_ids`
+re-rolls the birthday-paradox collisions that random draws produce). A
+`violation_id` shared by two output records therefore means exactly one
+thing: an `add_messiness` deliberate near-duplicate (same payload as its
+original bar the shifted timestamps). Detectors and Phase 1b labels rely on
+this — keep any new record source running through that dedupe pass.
 
 ### analyzers/ — four detectors, one shape
 Each module is self-contained and exposes the same surface: a `detect_*(alerts, ...)` function, a `load_alerts`/`load_json` helper, `print_findings()`, and a `main()`. Shared conventions:
@@ -89,7 +99,7 @@ Each module is self-contained and exposes the same surface: a `detect_*(alerts, 
 - **Timestamps** are ISO8601 with a trailing `Z`, parsed via `datetime.fromisoformat(s.replace("Z", "+00:00"))`.
 
 Detector-specific logic worth knowing before editing:
-- `recurring.py` — groups by `(condition, account_id)`, **dedupes by `violation_id`** first (near-duplicate rows must not inflate counts), then slides a `window_days` window and flags the first window containing `>= min_occurrences`.
+- `recurring.py` — groups by `(condition, account_id)`, **dedupes by `violation_id`** first (the generator's deliberate near-duplicate rows must not inflate counts; `violation_id` is a reliable key — see the generator notes above), then slides a `window_days` window and flags the first window containing `>= min_occurrences`.
 - `correlation.py` — groups by `account_id`, sorts by time, greedily grows a cluster while each alert is within `cluster_window_minutes` of the *previous* alert (so clusters can chain longer than the raw window). `conditions_involved` is deduped.
 - `threshold.py` — groups by `condition`, takes the **mode** of `threshold_value` as the "configured" threshold, and only trusts it if it appears `>= 2` times and in `>= 20%` of samples (needs `>= 3` samples total). `over-sensitive` = median observed below threshold; `under-sensitive` = above.
 - `runbook_coverage.py` — policies present in alerts but absent from runbooks, ranked by alert volume.
@@ -147,6 +157,8 @@ rather than working around it.
 
 - Type annotations on all public functions.
 - Configurable thresholds as parameters with defaults. No magic numbers.
+- Commit messages follow Conventional Commits: `type: description`, where
+  type is one of feat, fix, docs, test, refactor, chore, ci.
 - Tests are meaningful, not decorative. Every detector needs a known-input
   case asserting exact expected output, malformed-input cases confirming
   graceful skip rather than crash, and an empty-input case.

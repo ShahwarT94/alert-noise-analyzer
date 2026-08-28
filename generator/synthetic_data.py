@@ -146,6 +146,34 @@ def generate_violation_id(rng: random.Random) -> str:
     return f"V-{rng.randint(100000, 999999)}"
 
 
+def _ensure_unique_violation_ids(alerts: list, rng: random.Random) -> None:
+    """Re-roll any violation_id that repeats within base alert generation.
+
+    generate_violation_id draws independently each call, so ids collide by
+    the birthday paradox (~900k id space, ~560 alerts per run). Downstream
+    treats violation_id as a key: the recurring detector dedupes by it and
+    Phase 1b labels are keyed on it, so a collision between two unrelated
+    alerts silently corrupts both.
+
+    Runs on the assembled base alerts BEFORE add_messiness, which
+    deliberately reuses an existing id for each near-duplicate record. After
+    this pass a shared violation_id in the output means "deliberate
+    duplicate" and nothing else.
+
+    Deterministic per seed and across processes: alerts are visited in list
+    order and ``seen`` is only membership-tested, never iterated, so hash
+    randomisation cannot affect the result and the sorted()-before-sample
+    rule does not apply. Re-rolls keep the exact existing format and range.
+    """
+    seen: set[str] = set()
+    for alert in alerts:
+        vid = alert["violation_id"]
+        while vid in seen:
+            vid = f"V-{rng.randint(100000, 999999)}"
+        alert["violation_id"] = vid
+        seen.add(vid)
+
+
 def format_iso(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -446,6 +474,8 @@ def generate_alerts(seed: int = 42) -> tuple:
         )
         all_alerts.extend(background)
 
+    _ensure_unique_violation_ids(all_alerts, rng)
+
     all_alerts, messy_count = add_messiness(all_alerts, rng)
 
     return all_alerts, {
@@ -462,10 +492,19 @@ def generate_runbooks(alerts: list, seed: int = 42) -> tuple:
     rng = random.Random(seed + 1)
 
     policies_in_alerts = set(a["policy"] for a in alerts)
-    policies_list = list(policies_in_alerts)
+    # sorted(), not list(set(...)): a set's iteration order for strings depends
+    # on per-process hash randomization, so list(set(...)) feeds rng.sample() a
+    # different ordering on every run and the "seeded" pick is not reproducible
+    # across processes. A sorted list is a stable input, so the seeded draw is
+    # identical run to run.
+    policies_sorted = sorted(policies_in_alerts)
 
-    num_with_runbook = int(len(policies_list) * 0.7)
-    policies_with_runbook = set(rng.sample(policies_list, num_with_runbook))
+    num_with_runbook = int(len(policies_sorted) * 0.7)
+    # Keep the sample as a list (not a set) so the emitted file follows the
+    # seeded draw order; rebuilding a set here would reintroduce per-process
+    # ordering in runbooks.json.
+    policies_with_runbook = rng.sample(policies_sorted, num_with_runbook)
+    with_runbook = set(policies_with_runbook)
 
     runbooks = []
     for policy in policies_with_runbook:
@@ -476,7 +515,7 @@ def generate_runbooks(alerts: list, seed: int = 42) -> tuple:
             }
         )
 
-    policies_without_runbook = policies_in_alerts - policies_with_runbook
+    policies_without_runbook = policies_in_alerts - with_runbook
 
     return runbooks, len(policies_without_runbook)
 
